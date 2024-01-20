@@ -26,7 +26,7 @@ import static com.raffa064.deepnote.updates.UpdateHandler.*;
 public class MainActivity extends AppCompatActivity {
 	private UpdateHandler updateHandler;
 	private WebView webView;
-	private boolean forceReload;
+	private boolean forceReload; // Used as flag to force reload after update without asking the user
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 			webView.restoreState(savedInstanceState);
 		}
 	}
-	
+
 	@JavascriptInterface
 	public void forceUpdate() {
 		updateHandler.forceUpdate();
@@ -105,23 +105,22 @@ public class MainActivity extends AppCompatActivity {
 	private void setupWebView() {
 		webView = new WebView(this);
 		webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+		webView.addJavascriptInterface(this, "app");
 		webView.setWebViewClient(new WebViewClient() {
 				@Override
 				public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
 					super.onReceivedError(view, request, error);
 
-					// Obtém a mensagem de erro completa
 					String errorMessage;
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 						errorMessage = error.getDescription().toString() + ": " + request.getUrl();
 					} else {
-						errorMessage = "Erro desconhecido";
+						errorMessage = "Unknown error";
 					}
 
-					showToast("Error: " + errorMessage);
+					showToast("Error: " + errorMessage); // WebView error handler
 				}
 			});
-		webView.addJavascriptInterface(this, "app");
 
 		WebSettings settings = webView.getSettings();
 		settings.setJavaScriptEnabled(true);
@@ -130,12 +129,8 @@ public class MainActivity extends AppCompatActivity {
 		settings.setAllowUniversalAccessFromFileURLs(true);
 		settings.setAllowFileAccessFromFileURLs(true);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			WebView.setWebContentsDebuggingEnabled(true);
-		}
-
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-			settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+			settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW); // http/https access (used for debug)
 		}
 	}
 
@@ -167,64 +162,39 @@ public class MainActivity extends AppCompatActivity {
 								loadApp();
 							}
 						});
+						
 					return;
-
 				}
 
 				askToRestart();
 			}
 		};
 
-		updateHandler.start();
+		updateHandler.startUpdateThread();
 	}
 
 	private void setupInterface() {
 		setContentView(webView);
 	}
 
-	private String getIndentPrefix(int level) {
-		String prefix = "";
-		for (int i = 0; i < level; i++) {
-			prefix += "  ";
-		}
-
-		return prefix;
-	}
-
-	private String getFolderContent(File dir, String content, int level) {
-        content += getIndentPrefix(level) + dir.getName();
-
-		if (dir.isDirectory()) {
-			content += "/\n";
-			for (File f : dir.listFiles()) {
-				content = getFolderContent(f, content, level + 1);
-			}
-        } else {
-			content += "\n";
-		}
-
-		return content;
-    }
-
-	private String getFolderContent(File dir) {
-		return getFolderContent(dir, "", 0);
-    }
-
 	private void loadApp() {	
 		File latestDir = new File(getFilesDir(), "latest");
 		File index = new File(latestDir, "index.html");
 
 		if (index.exists()) {
-			webView.clearCache(true);
-			webView.clearHistory();
-			System.gc();
-
+			clearCache();
 			webView.loadUrl("file://" + latestDir + "/index.html"); // Fixed to work on dual apps, and second space
 			return;
 		} 
 
-		webView.loadUrl("file:///android_asset/index.html");
-		forceReload = true;
+		webView.loadUrl("file:///android_asset/index.html"); // Loading screen (Appear only at first launch) 
+		forceReload = true; // Force reload when download has been finished 
+	}
+
+	private void clearCache() {
+		webView.clearCache(true);
+		webView.clearHistory();
+		System.gc();
 	}
 
 	private void showToast(final String message) {
@@ -257,4 +227,32 @@ public class MainActivity extends AppCompatActivity {
 				}
 			});
 	}
+	
+	private String getIndentPrefix(int level) {
+		String prefix = "";
+		for (int i = 0; i < level; i++) {
+			prefix += "  ";
+		}
+
+		return prefix;
+	}
+
+	private String getFolderContent(File dir, String content, int level) {
+        content += getIndentPrefix(level) + dir.getName();
+
+		if (dir.isDirectory()) {
+			content += "/\n";
+			for (File f : dir.listFiles()) {
+				content = getFolderContent(f, content, level + 1);
+			}
+        } else {
+			content += "\n";
+		}
+
+		return content;
+    }
+
+	private String getFolderContent(File dir) {
+		return getFolderContent(dir, "", 0);
+    }
 }

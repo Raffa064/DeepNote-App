@@ -59,10 +59,10 @@ public abstract class UpdateHandler {
 	public void forceUpdate() {
 		Commit fakeCommit = new Commit("Unknown", "fakecommit", "This is a fake commit, used to force update");
 		setLocalCommit(fakeCommit);
-		start();
+		startUpdateThread();
 	}
 	
-	public void start() {
+	public void startUpdateThread() {
 		new Thread() {
 			@Override
 			public void run() {
