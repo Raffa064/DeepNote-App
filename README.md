@@ -10,5 +10,6 @@ Android app for [DeepNote](https://github.com/Raffa064/DeepNote).
 
 ## Download
 You can download it on [DeepNote releases](https://github.com/Raffa064/DeepNote/releases) section.
+
 **NOTE:** The android app just can UPDATE it contents, but NOT its APK file. When new versions is available, you'll need to manually download and install it (to access new **android** features).
 
