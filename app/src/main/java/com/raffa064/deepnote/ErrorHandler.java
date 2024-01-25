@@ -5,7 +5,7 @@ import android.app.AlertDialog;
 import android.util.Log;
 
 public class ErrorHandler {
-    public static void showErrorMessage(final Activity activity, final Throwable throwable) {
+    public static void showErrorMessage(final Activity activity, final String title, final Throwable throwable) {
         activity.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -13,7 +13,7 @@ public class ErrorHandler {
 				String stackTrace = Log.getStackTraceString(throwable);
 
 				StringBuilder messageBuilder = new StringBuilder();
-				messageBuilder.append("Error: ").append(errorMessage).append("\n\n");
+				messageBuilder.append(title).append(errorMessage).append("\n\n");
 				messageBuilder.append("StackTrace:\n").append(stackTrace);
 
 				AlertDialog.Builder builder = new AlertDialog.Builder(activity);

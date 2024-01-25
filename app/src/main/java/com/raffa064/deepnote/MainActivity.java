@@ -1,10 +1,13 @@
 package com.raffa064.deepnote;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +25,8 @@ import java.io.File;
 import org.json.JSONObject;
 
 import static com.raffa064.deepnote.updates.UpdateHandler.*;
+import android.support.v4.content.ContextCompat;
+import android.Manifest;
 
 public class MainActivity extends AppCompatActivity {
 	private UpdateHandler updateHandler;
@@ -35,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 		setupUpdater();
 		setupWebView();
 		setupInterface();
-
+		
 		if (savedInstanceState == null) {
 			loadApp();
 		}
@@ -61,7 +66,12 @@ public class MainActivity extends AppCompatActivity {
 
 	@JavascriptInterface
 	public void forceUpdate() {
-		updateHandler.forceUpdate();
+		if (hasInternetConnection()) {
+			updateHandler.forceUpdate();
+			return;
+		}
+		
+		showToast("No internet connection!");
 	}
 
 	@JavascriptInterface
@@ -112,6 +122,16 @@ public class MainActivity extends AppCompatActivity {
 			}
 		}.start();
 	}
+	
+	private boolean hasInternetConnection() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
+
+		boolean phoneIsConnected = capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+		boolean appHasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED;
+		
+		return phoneIsConnected && appHasPermission;
+	}
 
 	private void setupWebView() {
 		webView = new WebView(this);
@@ -127,6 +147,13 @@ public class MainActivity extends AppCompatActivity {
 						errorMessage = error.getDescription().toString() + ": " + request.getUrl();
 					} else {
 						errorMessage = "Unknown error";
+					}
+					
+					String[] wordsTofilter = { "_INTERNET_" };
+					for (String word : wordsTofilter) {
+						if (errorMessage.contains(word)) {
+							return;
+						}
 					}
 
 					showToast("Error: " + errorMessage); // WebView error handler
@@ -160,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
 			@Override
 			public void updateError(int errCode, Throwable throwable) {
-				ErrorHandler.showErrorMessage(MainActivity.this, throwable);
+				ErrorHandler.showErrorMessage(MainActivity.this, "Update error", throwable);
 			}
 
 			@Override
@@ -182,7 +209,9 @@ public class MainActivity extends AppCompatActivity {
 			}
 		};
 
-		updateHandler.startUpdateThread();
+		if (hasInternetConnection()) {
+			updateHandler.startUpdateThread();
+		}
 	}
 
 	private void setupInterface() {
