@@ -101,6 +101,17 @@ public class MainActivity extends AppCompatActivity {
 			return null;
 		}
 	}
+	
+	@JavascriptInterface
+	public void clearCache() {
+		new Thread() {
+			@Override
+			public void run() {
+				clearWebviewCache();
+				showToast("Cache cleanned!");
+			}
+		}.start();
+	}
 
 	private void setupWebView() {
 		webView = new WebView(this);
@@ -123,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
 			});
 
 		WebSettings settings = webView.getSettings();
+		settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 		settings.setJavaScriptEnabled(true);
 		settings.setForceDark(WebSettings.FORCE_DARK_OFF);
 		settings.setDomStorageEnabled(true);
@@ -182,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
 		File index = new File(latestDir, "index.html");
 
 		if (index.exists()) {
-			clearCache();
+			clearWebviewCache();
 			webView.loadUrl("file://" + latestDir + "/index.html"); // Fixed to work on dual apps, and second space
 			return;
 		} 
@@ -191,10 +203,15 @@ public class MainActivity extends AppCompatActivity {
 		forceReload = true; // Force reload when download has been finished 
 	}
 
-	private void clearCache() {
-		webView.clearCache(true);
-		webView.clearHistory();
-		System.gc();
+	private void clearWebviewCache() {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				webView.clearCache(true);
+				webView.clearHistory();
+				System.gc();
+			}
+		});
 	}
 
 	private void showToast(final String message) {
