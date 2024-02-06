@@ -31,8 +31,8 @@ import android.Manifest;
 public class MainActivity extends AppCompatActivity {
 	private UpdateHandler updateHandler;
 	private WebView webView;
-	private boolean forceReload; // Used as flag to force reload after update without asking the user
-
+	private boolean forceReloadAfterUpdate; // Used as flag to force reload after update without asking the user
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,7 +67,12 @@ public class MainActivity extends AppCompatActivity {
 	@JavascriptInterface
 	public void forceUpdate() {
 		if (hasInternetConnection()) {
-			updateHandler.forceUpdate();
+			boolean sucess = updateHandler.forceUpdate();
+			
+			if (!sucess) {
+				showToast("Already updating...");
+			}
+			
 			return;
 		}
 		
@@ -137,28 +142,7 @@ public class MainActivity extends AppCompatActivity {
 		webView = new WebView(this);
 		webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 		webView.addJavascriptInterface(this, "app");
-		webView.setWebViewClient(new WebViewClient() {
-				@Override
-				public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-					super.onReceivedError(view, request, error);
-
-					String errorMessage;
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-						errorMessage = error.getDescription().toString() + ": " + request.getUrl();
-					} else {
-						errorMessage = "Unknown error";
-					}
-					
-					String[] wordsTofilter = { "_INTERNET_" };
-					for (String word : wordsTofilter) {
-						if (errorMessage.contains(word)) {
-							return;
-						}
-					}
-
-					showToast("Error: " + errorMessage); // WebView error handler
-				}
-			});
+		webView.setWebViewClient(new WebViewClient());
 
 		WebSettings settings = webView.getSettings();
 		settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
@@ -187,13 +171,17 @@ public class MainActivity extends AppCompatActivity {
 
 			@Override
 			public void updateError(int errCode, Throwable throwable) {
-				ErrorHandler.showErrorMessage(MainActivity.this, "Update error", throwable);
+				if (forceReloadAfterUpdate) {
+					forceReloadAfterUpdate = false;
+					
+					ErrorHandler.showErrorMessage(MainActivity.this, "Update error", throwable);
+				}
 			}
 
 			@Override
 			public void updateFinished() {
-				if (forceReload) {
-					forceReload = false;
+				if (forceReloadAfterUpdate) {
+					forceReloadAfterUpdate = false;
 
 					runOnUiThread(new Runnable() {
 							@Override
@@ -229,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 		} 
 
 		webView.loadUrl("file:///android_asset/index.html"); // Loading screen (Appear only at first launch) 
-		forceReload = true; // Force reload when download has been finished 
+		forceReloadAfterUpdate = true; // Force reload when download has been finished 
 	}
 
 	private void clearWebviewCache() {

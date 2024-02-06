@@ -27,6 +27,8 @@ public abstract class UpdateHandler {
 
 	public SharedPreferences sharedPrefs; // Used to store data
 	public File filesDir; // android files folder /data/data/<pkgname>/files
+	
+	public Thread runningInstance;
 
 	public UpdateHandler(SharedPreferences sharedPrefs, File filesDir) {
 		this.sharedPrefs = sharedPrefs;
@@ -54,21 +56,38 @@ public abstract class UpdateHandler {
 			.putString("commit-sha", commit.sha)
 		    .putString("commit-message", commit.message)
 			.commit();
+			
 	}
 
-	public void forceUpdate() {
-		Commit fakeCommit = new Commit("Unknown", "fakecommit", "This is a fake commit, used to force update");
-		setLocalCommit(fakeCommit);
-		startUpdateThread();
+	public boolean forceUpdate() {
+		if (!isRunning()) {
+			Commit fakeCommit = new Commit("Unknown", "fakecommit", "This is a fake commit, used to force update");
+			setLocalCommit(fakeCommit);
+			startUpdateThread();
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isRunning() {
+		return runningInstance != null && runningInstance.isAlive();
 	}
 	
 	public void startUpdateThread() {
-		new Thread() {
+		if (isRunning()) {
+			return;
+		}
+		
+		runningInstance = new Thread() {
 			@Override
 			public void run() {
 				doUpdatePipeline();
 			}
-		}.start();
+		};
+		
+		runningInstance.start();
 	}
 
 	public void doUpdatePipeline() {
