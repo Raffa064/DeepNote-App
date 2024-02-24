@@ -8,8 +8,8 @@ android {
         applicationId "com.raffa064.deepnote"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 10
-        versionName "9.1"
+        versionCode 11
+        versionName "9.2"
     }
     
 	buildTypes {
@@ -17,10 +17,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
-	
-	packagingOptions {
-        exclude 'assets/.git'
     }
 }
 

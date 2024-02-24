@@ -1,14 +1,25 @@
-body {
+* {
+  padding: 0;
+  marging: 0;
+  box-sizing: border-box;
   font-family: "Roboto", sans-serif;
-  background-color: #121212;
-  color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+body {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100vw;
   height: 100vh;
+  overflow: hidden;
   margin: 0;
   padding: 20px;
+  background-color: #121212;
+  color: #ffffff;
 }
 
 h1 {
