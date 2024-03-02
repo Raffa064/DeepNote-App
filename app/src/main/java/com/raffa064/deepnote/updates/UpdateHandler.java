@@ -12,8 +12,8 @@ import java.net.URL;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import static com.raffa064.deepnote.updates.NetUtils.*;
-import static com.raffa064.deepnote.updates.FileUtils.*;
+import static com.raffa064.deepnote.utils.NetUtils.*;
+import static com.raffa064.deepnote.utils.FileUtils.*;
 
 /*
 	Used to find and apply updates
@@ -120,6 +120,7 @@ public abstract class UpdateHandler {
 			updateError(ERR_JSON_EXCEPTION, e); // Server reponse error
 		}
 	}
+	
 	public Update checkForUpdate() throws IOException, JSONException {
 		Commit localCommit = getLocalCommit();
 
