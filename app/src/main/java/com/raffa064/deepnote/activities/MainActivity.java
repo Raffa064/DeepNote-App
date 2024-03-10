@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		FilteredWebViewClient filteredWebViewClient = new FilteredWebViewClient();
 		filteredWebViewClient.addFilter(
-			"^http://localhost:\\d{4}/.*e",     // Debug server
+			"^http://localhost:\\d{4}/.*",      // Debug server
 			"^file:///android_asset/.*",        // Used for loadscreen
 			"^file://" + getLatestDir() + "/.*" // Default work dir
 		);
